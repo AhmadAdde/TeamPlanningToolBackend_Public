@@ -47,11 +47,11 @@ public class AuthServiceImpl implements AuthService {
             //TODO: DECIDE IF THERE IS ANY NEED TO SEND MORE DATA BESIDES JWT
             TokenResponse token = TokenResponse.builder()
                     .username(request.getUsername())
-                    .jwt(jwt)
+                    .accessToken(jwt)
                     .roles(List.of(Role.USER))
                     .build();
 
-            return ResponseEntity.ok(jwt);
+            return ResponseEntity.ok(token);
 
         } catch (Exception ex) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();

@@ -14,13 +14,12 @@ import java.util.List;
  * object that contains all parameters below.
  */
 
-@Deprecated
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class TokenResponse {
-    private String jwt;
+    private String accessToken;
     private final String type = "Bearer";
     private String username;
     private List<Role> roles;

@@ -1,0 +1,20 @@
+version: "3.8"
+
+services:
+  mysqldb:
+    image: mysql
+    restart: always
+    ports:
+      - "13306:3306"
+    environment:
+      MYSQL_DATABASE: user_database
+      MYSQL_PASSWORD: root
+      MYSQL_ROOT_PASSWORD: root
+
+  server:
+    build: .
+    restart: always
+    ports:
+      - "18080:8080"
+    depends_on:
+      - mysqldb

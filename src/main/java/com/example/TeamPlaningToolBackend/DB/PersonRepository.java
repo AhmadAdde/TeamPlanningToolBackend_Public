@@ -1,4 +1,4 @@
-package com.example.TeamPlaningToolBackend.repository;
+package com.example.TeamPlaningToolBackend.DB;
 
 import com.example.TeamPlaningToolBackend.DB.PersonDB;
 import org.springframework.data.jpa.repository.JpaRepository;

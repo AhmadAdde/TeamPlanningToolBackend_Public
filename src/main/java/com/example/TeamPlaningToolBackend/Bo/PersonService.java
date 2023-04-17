@@ -1,9 +1,9 @@
 package com.example.TeamPlaningToolBackend.Bo;
 
 import com.example.TeamPlaningToolBackend.DB.PersonDB;
+import com.example.TeamPlaningToolBackend.DB.PersonRepository;
 import com.example.TeamPlaningToolBackend.DB.TeamsDB;
-import com.example.TeamPlaningToolBackend.repository.PersonRepository;
-import com.example.TeamPlaningToolBackend.repository.TeamsRepository;
+import com.example.TeamPlaningToolBackend.DB.TeamsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -30,6 +30,7 @@ public class PersonService implements IPersonService{
                 person.setLastname(parts[3]);
                 person.setUsername(parts[4]);
                 String teamName = parts[1];
+                System.out.println(person);
                 if (teamsRepository != null) {
                     TeamsDB team = teamsRepository.findByteamName(teamName)
                             .orElseGet(() -> {

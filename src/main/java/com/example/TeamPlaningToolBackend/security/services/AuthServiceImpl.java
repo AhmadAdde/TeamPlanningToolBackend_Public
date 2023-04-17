@@ -3,7 +3,7 @@ package com.example.TeamPlaningToolBackend.security.services;
 import com.example.TeamPlaningToolBackend.DB.UserDB;
 import com.example.TeamPlaningToolBackend.security.sec_utils.AuthCredentialRequest;
 import com.example.TeamPlaningToolBackend.enums.Role;
-import com.example.TeamPlaningToolBackend.repository.UserRepository;
+import com.example.TeamPlaningToolBackend.DB.UserRepository;
 import com.example.TeamPlaningToolBackend.security.sec_utils.CustomPasswordEncoder;
 import com.example.TeamPlaningToolBackend.security.sec_utils.RegisterRequest;
 import com.example.TeamPlaningToolBackend.security.sec_utils.TokenResponse;

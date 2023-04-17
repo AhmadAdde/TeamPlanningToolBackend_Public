@@ -9,8 +9,8 @@ import org.springframework.context.annotation.ComponentScan;
 @SpringBootApplication
 @ComponentScan(basePackages = "com.example.TeamPlaningToolBackend.Bo")
 public class TeamPlaningToolBackendApplication {
-	@Autowired
-	private static PersonService personService;
+
+	private static PersonService personService = new PersonService();
 
 	public static void main(String[] args) {
 		SpringApplication.run(TeamPlaningToolBackendApplication.class, args);

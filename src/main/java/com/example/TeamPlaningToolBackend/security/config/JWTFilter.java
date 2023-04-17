@@ -1,6 +1,6 @@
 package com.example.TeamPlaningToolBackend.security.config;
 
-import com.example.TeamPlaningToolBackend.repository.UserRepository;
+import com.example.TeamPlaningToolBackend.DB.UserRepository;
 import com.example.TeamPlaningToolBackend.security.services.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

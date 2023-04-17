@@ -5,6 +5,7 @@ import com.example.TeamPlaningToolBackend.DB.PersonRepository;
 import com.example.TeamPlaningToolBackend.DB.TeamsDB;
 import com.example.TeamPlaningToolBackend.DB.TeamsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
@@ -12,14 +13,15 @@ import java.io.FileReader;
 import java.io.IOException;
 
 @Service
+@ComponentScan(basePackages={"com.example.TeamPlaningToolBackend.repository"})
 public class PersonService implements IPersonService{
 
     @Autowired
     private PersonRepository personRepository;
-    @Autowired
-    private TeamsRepository teamsRepository;
+    //@Autowired
+    //private TeamsRepository teamsRepository;
 
-
+    @Override
     public void readFileToDatabase(String filename) {
         try (BufferedReader br = new BufferedReader(new FileReader(filename))){
             String line;
@@ -31,7 +33,7 @@ public class PersonService implements IPersonService{
                 person.setUsername(parts[4]);
                 String teamName = parts[1];
                 System.out.println(person);
-                if (teamsRepository != null) {
+                /*if (teamsRepository != null) {
                     TeamsDB team = teamsRepository.findByteamName(teamName)
                             .orElseGet(() -> {
                                 TeamsDB newTeam = new TeamsDB();
@@ -40,18 +42,20 @@ public class PersonService implements IPersonService{
                             });
 
                     // add the team to the user
-                    person.getTeam().add(team);
+                    person.getTeam().add(team);*/
                     personRepository.save(person);
-                } else {
+                /*} else {
                     // Handle the case when teamsRepository is null
                     // e.g. throw an exception, instantiate it, or use a default value
                     // Example:
                     throw new RuntimeException("teamsRepository is null");
-                }
+                }*/
             }
+        } catch (IOException exception) {
+            exception.printStackTrace();
         }
-        catch (IOException e) {
+        /*catch (IOException e) {
             e.printStackTrace();
-        }
+        }*/
     }
 }

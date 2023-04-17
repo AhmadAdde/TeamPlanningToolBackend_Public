@@ -1,9 +1,9 @@
 package com.example.TeamPlaningToolBackend.repository;
 
-import com.example.TeamPlaningToolBackend.DB.UserDB;
+import com.example.TeamPlaningToolBackend.DB.PersonDB;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface UserRepository extends JpaRepository<UserDB, String> {
+public interface PersonRepository extends JpaRepository<PersonDB, String> {
 }

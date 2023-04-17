@@ -1,7 +1,7 @@
 package com.example.TeamPlaningToolBackend.security.services;
 
+import com.example.TeamPlaningToolBackend.DB.UserDB;
 import com.example.TeamPlaningToolBackend.security.sec_utils.AuthCredentialRequest;
-import com.example.TeamPlaningToolBackend.entities.User;
 import com.example.TeamPlaningToolBackend.enums.Role;
 import com.example.TeamPlaningToolBackend.repository.UserRepository;
 import com.example.TeamPlaningToolBackend.security.sec_utils.CustomPasswordEncoder;
@@ -40,9 +40,9 @@ public class AuthServiceImpl implements AuthService {
                             request.getUsername(), request.getPassword()
                     )
             );
-            User user = userRepository.findById(request.getUsername()).orElseThrow();
+            UserDB userDB = userRepository.findById(request.getUsername()).orElseThrow();
 
-            String jwt = jwtService.generateToken(user);
+            String jwt = jwtService.generateToken(userDB);
 
             //TODO: DECIDE IF THERE IS ANY NEED TO SEND MORE DATA BESIDES JWT
             TokenResponse token = TokenResponse.builder()
@@ -66,14 +66,14 @@ public class AuthServiceImpl implements AuthService {
                 return ResponseEntity.status(HttpStatus.CONFLICT).build();
             }
 
-            User user = User.builder()
+            UserDB userDB = UserDB.builder()
                     .firstname(request.getFullName())
                     .lastname(request.getFullName())
                     .username(request.getUsername())
                     .password(customPasswordEncoder.getPasswordEncoder().encode(request.getPassword()))
                     .role(Role.USER)
                     .build();
-            userRepository.save(user);
+            userRepository.save(userDB);
 
             return ResponseEntity.ok(HttpStatus.CREATED);
 

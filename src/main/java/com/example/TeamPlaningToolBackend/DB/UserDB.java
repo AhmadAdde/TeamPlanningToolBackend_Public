@@ -1,4 +1,4 @@
-package com.example.TeamPlaningToolBackend.entities;
+package com.example.TeamPlaningToolBackend.DB;
 
 import com.example.TeamPlaningToolBackend.enums.Role;
 import jakarta.persistence.*;
@@ -17,7 +17,7 @@ import java.util.List;
 @AllArgsConstructor
 @Entity
 @Table(name = "user_table")
-public class User implements UserDetails {
+public class UserDB implements UserDetails {
     private static final long serialVersionUID = 1L;
 
     @Id

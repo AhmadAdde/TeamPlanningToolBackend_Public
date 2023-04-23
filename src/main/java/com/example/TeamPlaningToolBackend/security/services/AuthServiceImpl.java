@@ -1,9 +1,9 @@
 package com.example.TeamPlaningToolBackend.security.services;
 
-import com.example.TeamPlaningToolBackend.DB.UserDB;
+import com.example.TeamPlaningToolBackend.entities.User;
+import com.example.TeamPlaningToolBackend.repository.UserRepository;
 import com.example.TeamPlaningToolBackend.security.sec_utils.AuthCredentialRequest;
 import com.example.TeamPlaningToolBackend.enums.Role;
-import com.example.TeamPlaningToolBackend.DB.UserRepository;
 import com.example.TeamPlaningToolBackend.security.sec_utils.CustomPasswordEncoder;
 import com.example.TeamPlaningToolBackend.security.sec_utils.RegisterRequest;
 import com.example.TeamPlaningToolBackend.security.sec_utils.TokenResponse;
@@ -40,9 +40,9 @@ public class AuthServiceImpl implements AuthService {
                             request.getUsername(), request.getPassword()
                     )
             );
-            UserDB userDB = userRepository.findById(request.getUsername()).orElseThrow();
+            User user = userRepository.findById(request.getUsername()).orElseThrow();
 
-            String jwt = jwtService.generateToken(userDB);
+            String jwt = jwtService.generateToken(user);
 
             //TODO: DECIDE IF THERE IS ANY NEED TO SEND MORE DATA BESIDES JWT
             TokenResponse token = TokenResponse.builder()
@@ -66,7 +66,7 @@ public class AuthServiceImpl implements AuthService {
                 return ResponseEntity.status(HttpStatus.CONFLICT).build();
             }
 
-            UserDB userDB = UserDB.builder()
+            User userDB = User.builder()
                     .firstname(request.getFullName())
                     .lastname(request.getFullName())
                     .username(request.getUsername())

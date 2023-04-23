@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class CustomPasswordEncoder {
-    private PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
 
     public CustomPasswordEncoder () {
         this.passwordEncoder = new BCryptPasswordEncoder();

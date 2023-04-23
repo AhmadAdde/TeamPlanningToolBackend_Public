@@ -1,4 +1,4 @@
-package com.example.TeamPlaningToolBackend.DB;
+package com.example.TeamPlaningToolBackend.entities;
 
 import com.example.TeamPlaningToolBackend.enums.Role;
 import jakarta.persistence.*;
@@ -7,17 +7,23 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.io.Serial;
 import java.util.Collection;
 import java.util.List;
 
-@Getter
+/***
+ * This class represents users having access to the system.
+ * */
 @Setter
+@Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "user_table")
-public class UserDB implements UserDetails {
+@Table(name = "user_t")
+public class User implements UserDetails {
+
+    @Serial
     private static final long serialVersionUID = 1L;
 
     @Id

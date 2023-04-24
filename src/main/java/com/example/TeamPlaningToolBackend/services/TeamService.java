@@ -3,6 +3,8 @@ package com.example.TeamPlaningToolBackend.services;
 import com.example.TeamPlaningToolBackend.utils.AddMemberRequest;
 import com.example.TeamPlaningToolBackend.utils.TeamDTO;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 
 public interface TeamService {
@@ -11,4 +13,5 @@ public interface TeamService {
     void addMember(AddMemberRequest member);
     void deleteMember(AddMemberRequest member);
     void deleteTeam(String teamName);
+    void readIRMSheet(String path) throws IOException;
 }

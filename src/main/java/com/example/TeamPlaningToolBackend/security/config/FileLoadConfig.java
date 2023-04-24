@@ -15,7 +15,6 @@ public class FileLoadConfig {
 
     @Bean
     public void readFile() {
-        personService.readFileToDatabase("fake-ad-output.txt");
+        personService.readFileToDatabase("/assets/src/main/java/com/example/TeamPlaningToolBackend/assets/fake-ad-output.txt");
     }
-
 }

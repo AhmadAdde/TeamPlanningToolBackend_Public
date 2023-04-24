@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 @RestController
@@ -43,4 +44,12 @@ public class TeamController {
         teamService.deleteTeam(team.getTeamName());
     }
 
+    @PostMapping("load-irm")
+    public void loadIRM(@RequestParam String path) {
+        try {
+            teamService.readIRMSheet(path);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

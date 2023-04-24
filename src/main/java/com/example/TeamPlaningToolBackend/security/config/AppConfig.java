@@ -1,7 +1,9 @@
 package com.example.TeamPlaningToolBackend.security.config;
 
+import com.example.TeamPlaningToolBackend.repository.TeamRepository;
 import com.example.TeamPlaningToolBackend.repository.UserRepository;
 import com.example.TeamPlaningToolBackend.security.sec_utils.CustomPasswordEncoder;
+import com.example.TeamPlaningToolBackend.services.TeamService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -10,6 +12,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 

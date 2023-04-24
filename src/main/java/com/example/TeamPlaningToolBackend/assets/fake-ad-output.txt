@@ -1,0 +1,8 @@
+1 MSDCN3 Arne1 Anka1 ankaarn1
+2 MSDCN5 Arne2 Anka2 ankaarn2
+3 MSIT Arne3 Anka3 ankaarn3
+4 MSDCN Arne4 Anka4 ankaarn4
+5 MSDCN3 Arne5 Anka5 ankaarn5
+6 MSFC1 Arne6 Anka6 ankaarn6
+7 MSDCN3 Arne7 Anka7 ankaarn7
+8 MSPS22 Arne8 Anka8 ankaarn8

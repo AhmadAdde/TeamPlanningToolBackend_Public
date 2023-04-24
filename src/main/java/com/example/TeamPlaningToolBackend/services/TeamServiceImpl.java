@@ -2,18 +2,22 @@ package com.example.TeamPlaningToolBackend.services;
 
 import com.example.TeamPlaningToolBackend.entities.Person;
 import com.example.TeamPlaningToolBackend.entities.Team;
+import com.example.TeamPlaningToolBackend.enums.Role;
 import com.example.TeamPlaningToolBackend.repository.PersonRepository;
 import com.example.TeamPlaningToolBackend.repository.TeamRepository;
 import com.example.TeamPlaningToolBackend.utils.AddMemberRequest;
 import com.example.TeamPlaningToolBackend.utils.PersonDTO;
 import com.example.TeamPlaningToolBackend.utils.TeamDTO;
 import lombok.RequiredArgsConstructor;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.io.*;
+
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -87,7 +91,9 @@ public class TeamServiceImpl implements TeamService{
 
     @Override
     public void addMember(AddMemberRequest member) {
-        Team team = teamRepository.findById(member.getTeamName()).get();
+        Optional<Team> teamOptional = teamRepository.findById(member.getTeamName());
+        if(teamOptional.isEmpty()) return;
+        Team team = teamOptional.get();
         PersonDTO personDTO = personService.getPersonByUsername(member.getMemberName());
 
         team.getMembers().add(
@@ -104,15 +110,17 @@ public class TeamServiceImpl implements TeamService{
 
     @Override
     public void deleteMember(AddMemberRequest member) {
-        Optional<Team> team = teamRepository.findById(member.getTeamName());
-        Person person = personRepository.findById(member.getMemberName()).get();
+        Optional<Team> teamOptional = teamRepository.findById(member.getTeamName());
+        Optional<Person> personOptional = personRepository.findById(member.getMemberName());
+        if(personOptional.isEmpty() || teamOptional.isEmpty()) return;
 
-        if (team.isEmpty() || person == null) return;
+        Person person = personOptional.get();
+        Team team = teamOptional.get();
 
-        team.get().getMembers().remove(person);
+        team.getMembers().remove(person);
+        team.getMembers().forEach(ob -> System.out.println(ob.getUsername()));
 
-        team.get().getMembers().forEach(ob -> System.out.println(ob.getUsername()));
-        teamRepository.save(team.get());
+        teamRepository.save(team);
     }
 
     @Override
@@ -120,5 +128,43 @@ public class TeamServiceImpl implements TeamService{
         Optional<Team> teamsDB = teamRepository.findById(teamName);
         if (teamsDB.isEmpty()) return;
         teamRepository.deleteById(teamsDB.get().getTeamName());
+    }
+
+    @Override
+    public void readIRMSheet(String path) throws IOException {
+        FileInputStream fis = new FileInputStream(path);
+        XSSFWorkbook wb = new XSSFWorkbook(fis);
+        XSSFSheet sheet = wb.getSheetAt(0);
+
+        Map<String, Team> teamsMap = new HashMap<>();
+        Map<String, ArrayList<String>> memberTeamMap = new HashMap<>();
+
+        for (int rowIndex = 10; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
+            Row row = sheet.getRow(rowIndex);
+            String username = row.getCell(7).getStringCellValue();
+            String teamName = row.getCell(8).getStringCellValue();
+
+            if(!teamsMap.containsKey(teamName)) {
+                teamsMap.put(teamName, new Team(teamName, "", new ArrayList<>()));
+            }
+
+            if(!memberTeamMap.containsKey(username)) memberTeamMap.put(username, new ArrayList<>(List.of(teamName)));
+            else memberTeamMap.get(username).add(teamName);
+        }
+
+        for(String username: memberTeamMap.keySet()) {
+            ArrayList<String> teamName = memberTeamMap.get(username);
+            Optional<Person> personOptional = personRepository.findById(username);
+            Person person;
+            if(personOptional.isEmpty()) {
+                person = new Person(username, "", "", null, new ArrayList<>());
+                personRepository.save(person);
+            } else {
+                person = personOptional.get();
+            }
+            for(String _teamName: teamName) teamsMap.get(_teamName).getMembers().add(person);
+        }
+
+        for(String teamName: teamsMap.keySet()) teamRepository.save(teamsMap.get(teamName));
     }
 }

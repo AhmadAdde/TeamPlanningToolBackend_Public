@@ -13,7 +13,7 @@ public class FileLoadConfig {
     @Autowired
     private final PersonService personService;
 
-    private final String localFilePath = "C:\\MyProjects\\Project_2_course\\backend\\TeamPlaningToolBackend\\src\\main\\java\\com\\example\\TeamPlaningToolBackend\\assets\\fake-ad-output.txt";
+    private final String localFilePath = "./src/main/java/com/example/TeamPlaningToolBackend/assets/fake-ad-output.txt";
     private final String dockerFilePath = "/assets/src/main/java/com/example/TeamPlaningToolBackend/assets/fake-ad-output.txt";
 
     @Bean

@@ -17,7 +17,7 @@ import java.util.List;
 public class TeamDTO {
 
     private String teamName;
-    private List<String> members;
+    private List<String> userIds;
     private String scrumMaster;
 
 }

@@ -34,8 +34,8 @@ public class TeamServiceImpl implements TeamService{
         teams.forEach(team -> {
             List<Person> members = new ArrayList<>();
 
-            if (team.getMembers() != null) {
-                team.getMembers().forEach(obj ->
+            if (team.getUserIds() != null) {
+                team.getUserIds().forEach(obj ->
                 {
                     PersonDTO personDTO = personService.getPersonByUsername(obj);
                     members.add(
@@ -81,7 +81,7 @@ public class TeamServiceImpl implements TeamService{
                     members.add((obj.getUsername()
             )));
             TeamDTO newTeam = TeamDTO.builder()
-                    .members(members)
+                    .userIds(members)
                     .scrumMaster(team.getScrumMaster())
                     .teamName(team.getTeamName())
                     .build();

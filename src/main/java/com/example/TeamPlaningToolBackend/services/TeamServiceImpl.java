@@ -2,7 +2,6 @@ package com.example.TeamPlaningToolBackend.services;
 
 import com.example.TeamPlaningToolBackend.entities.Person;
 import com.example.TeamPlaningToolBackend.entities.Team;
-import com.example.TeamPlaningToolBackend.enums.Role;
 import com.example.TeamPlaningToolBackend.repository.PersonRepository;
 import com.example.TeamPlaningToolBackend.repository.TeamRepository;
 import com.example.TeamPlaningToolBackend.utils.AddMemberRequest;
@@ -31,40 +30,44 @@ public class TeamServiceImpl implements TeamService{
     private final PersonService personService;
 
     @Override
-    public void createTeam(TeamDTO team) {
-        List<Person> members = new ArrayList<>();
+    public void createTeam(List<TeamDTO> teams) {
+        teams.forEach(team -> {
+            List<Person> members = new ArrayList<>();
 
-        if (team.getMembers() != null) {
-            team.getMembers().forEach(obj ->
-            {
-                PersonDTO personDTO = personService.getPersonByUsername(obj);
-                members.add(
-                        Person.builder()
-                                .username(personDTO.getUsername())
-                                .firstname(personDTO.getFirstname())
-                                .lastname(personDTO.getLastname())
-                                .role(personDTO.getRole())
-                                .build()
-                );
-            });
-        }
+            if (team.getMembers() != null) {
+                team.getMembers().forEach(obj ->
+                {
+                    PersonDTO personDTO = personService.getPersonByUsername(obj);
+                    members.add(
+                            Person.builder()
+                                    .username(personDTO.getUsername())
+                                    .firstname(personDTO.getFirstname())
+                                    .lastname(personDTO.getLastname())
+                                    .role(personDTO.getRole())
+                                    .build()
+                    );
+                });
+            }
 
-        PersonDTO scrumMasterDTO = personService.getPersonByUsername(team.getScrumMaster());
-        Person scrumMaster = Person.builder()
-                .username(scrumMasterDTO.getUsername())
-                .firstname(scrumMasterDTO.getFirstname())
-                .lastname(scrumMasterDTO.getLastname())
-                .role(scrumMasterDTO.getRole())
-                .build();
-        members.add(scrumMaster);
+            /*
+            PersonDTO scrumMasterDTO = personService.getPersonByUsername(team.getScrumMaster());
+            Person scrumMaster = Person.builder()
+                    .username(scrumMasterDTO.getUsername())
+                    .firstname(scrumMasterDTO.getFirstname())
+                    .lastname(scrumMasterDTO.getLastname())
+                    .role(scrumMasterDTO.getRole())
+                    .build();
+            members.add(scrumMaster);
+*/
 
-        Team newTeam = Team.builder()
-                .members(members)
-                .teamName(team.getTeamName())
-                .scrumMaster(team.getScrumMaster())
-                .build();
+            Team newTeam = Team.builder()
+                    .members(members)
+                    .teamName(team.getTeamName())
+                    //.scrumMaster(team.getScrumMaster())
+                    .build();
 
-        teamRepository.save(newTeam);
+            teamRepository.save(newTeam);
+        });
     }
 
     @Override
@@ -124,10 +127,12 @@ public class TeamServiceImpl implements TeamService{
     }
 
     @Override
-    public void deleteTeam(String teamName) {
-        Optional<Team> teamsDB = teamRepository.findById(teamName);
-        if (teamsDB.isEmpty()) return;
-        teamRepository.deleteById(teamsDB.get().getTeamName());
+    public void deleteTeam(List<String> teamNames) {
+        teamNames.forEach(teamName -> {
+            Optional<Team> teamsDB = teamRepository.findById(teamName);
+            if (teamsDB.isEmpty()) return;
+            teamRepository.deleteById(teamsDB.get().getTeamName());
+        });
     }
 
     @Override

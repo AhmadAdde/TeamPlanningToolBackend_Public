@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -25,8 +26,8 @@ public class TeamController {
     }
 
     @PostMapping("/create")
-    public void createTeam(@RequestBody TeamDTO team) {
-        teamService.createTeam(team);
+    public void createTeam(@RequestBody List<TeamDTO> teams) {
+        teamService.createTeam(teams);
     }
 
     @PostMapping("/add-member")
@@ -40,8 +41,8 @@ public class TeamController {
     }
 
     @PostMapping("/delete")
-    public void delete(@RequestBody TeamDTO team) {
-        teamService.deleteTeam(team.getTeamName());
+    public void delete(@RequestBody List<String> teamNames) {
+        teamService.deleteTeam(teamNames);
     }
 
     @PostMapping("load-irm")

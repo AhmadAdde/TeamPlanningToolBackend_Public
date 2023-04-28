@@ -82,7 +82,6 @@ public class TeamServiceImpl implements TeamService{
             )));
             TeamDTO newTeam = TeamDTO.builder()
                     .userIds(members)
-                    .scrumMaster(team.getScrumMaster())
                     .teamName(team.getTeamName())
                     .build();
 
@@ -138,31 +137,37 @@ public class TeamServiceImpl implements TeamService{
     @Override
     public void readIRMSheet(String path) throws IOException {
         FileInputStream fis = new FileInputStream(path);
-        XSSFWorkbook wb = new XSSFWorkbook(fis);
+        String password = "sample";
+        XSSFWorkbook wb = (XSSFWorkbook) WorkbookFactory.create(fis, password);
+
         XSSFSheet sheet = wb.getSheetAt(0);
 
         Map<String, Team> teamsMap = new HashMap<>();
         Map<String, ArrayList<String>> memberTeamMap = new HashMap<>();
 
-        for (int rowIndex = 10; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
+        for (int rowIndex = 9; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
             Row row = sheet.getRow(rowIndex);
-            String username = row.getCell(7).getStringCellValue();
-            String teamName = row.getCell(8).getStringCellValue();
+            String name = row.getCell(8).getStringCellValue();
+            String teamName = row.getCell(9).getStringCellValue();
+
+            if(name.isEmpty()) break;
 
             if(!teamsMap.containsKey(teamName)) {
                 teamsMap.put(teamName, new Team(teamName, "", new ArrayList<>()));
             }
 
-            if(!memberTeamMap.containsKey(username)) memberTeamMap.put(username, new ArrayList<>(List.of(teamName)));
-            else memberTeamMap.get(username).add(teamName);
+            if(!memberTeamMap.containsKey(name)) memberTeamMap.put(name, new ArrayList<>(List.of(teamName)));
+            else memberTeamMap.get(name).add(teamName);
         }
 
-        for(String username: memberTeamMap.keySet()) {
-            ArrayList<String> teamName = memberTeamMap.get(username);
-            Optional<Person> personOptional = personRepository.findById(username);
+        for(String name: memberTeamMap.keySet()) {
+            ArrayList<String> teamName = memberTeamMap.get(name);
+            String firstname = name.split(",")[1];
+            String lastname = name.split(",")[0];
+            Optional<Person> personOptional = personRepository.findByFirstnameAndLastname(firstname, lastname);
             Person person;
             if(personOptional.isEmpty()) {
-                person = new Person(username, "", "", null, new ArrayList<>());
+                person = new Person(firstname.toLowerCase() + lastname.toLowerCase(), firstname, lastname, null, new ArrayList<>());
                 personRepository.save(person);
             } else {
                 person = personOptional.get();
@@ -171,5 +176,41 @@ public class TeamServiceImpl implements TeamService{
         }
 
         for(String teamName: teamsMap.keySet()) teamRepository.save(teamsMap.get(teamName));
+    }
+
+    @Override
+    public void updateIRMSheet(String path) throws IOException {
+        FileInputStream fis = new FileInputStream(path);
+        String password = "sample";
+        XSSFWorkbook wb = (XSSFWorkbook) WorkbookFactory.create(fis, password);
+
+        XSSFSheet sheet = wb.getSheetAt(0);
+        Map<String, Team> teamsMap = new HashMap<>();
+        Map<String, ArrayList<String>> memberTeamMap = new HashMap<>();
+
+        for (int rowIndex = 9; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
+            Row row = sheet.getRow(rowIndex);
+            Cell nameCell = row.getCell(8);
+            if(nameCell.getStringCellValue().isEmpty()) break;
+            nameCell.setBlank();
+            row.getCell(9).setBlank();
+
+        }
+        int rowIndex = 9;
+        for (Person person: personRepository.findAll()) {
+
+            for (Team team: person.getTeams()) {
+                Row row = sheet.getRow(rowIndex);
+                row.getCell(8).setCellValue(person.getLastname() + ", " + person.getFirstname());
+                row.getCell(9).setCellValue(team.getTeamName());
+                rowIndex++;
+            }
+
+        }
+        fis.close();
+        FileOutputStream fos = new FileOutputStream(path);
+        wb.write(fos);
+        wb.close();
+        fos.close();
     }
 }

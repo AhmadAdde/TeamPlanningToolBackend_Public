@@ -53,4 +53,14 @@ public class TeamController {
             throw new RuntimeException(e);
         }
     }
+    @PostMapping("update-irm")
+    public void updateIrm(@RequestParam String path) {
+        try {
+            teamService.updateIRMSheet(path);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 }
+

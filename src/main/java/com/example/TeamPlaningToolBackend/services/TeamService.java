@@ -2,6 +2,7 @@ package com.example.TeamPlaningToolBackend.services;
 
 import com.example.TeamPlaningToolBackend.utils.AddMemberRequest;
 import com.example.TeamPlaningToolBackend.utils.TeamDTO;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -15,4 +16,5 @@ public interface TeamService {
     void deleteMember(AddMemberRequest member);
     void deleteTeam(List<String> teamNames);
     void readIRMSheet(String path) throws IOException;
+    void updateIRMSheet(String path) throws IOException;
 }

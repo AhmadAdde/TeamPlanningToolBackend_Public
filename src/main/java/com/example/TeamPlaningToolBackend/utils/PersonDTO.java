@@ -15,6 +15,7 @@ public class PersonDTO {
     private String firstname;
     private String lastname;
     private Role role;
+    private int availability;
     private List<String> teams;
 
 }

@@ -1,7 +1,11 @@
 package com.example.TeamPlaningToolBackend.services;
 
+import com.example.TeamPlaningToolBackend.entities.MemberInfo;
 import com.example.TeamPlaningToolBackend.entities.Person;
+import com.example.TeamPlaningToolBackend.entities.PersonMetaData;
 import com.example.TeamPlaningToolBackend.entities.Team;
+import com.example.TeamPlaningToolBackend.enums.Role;
+import com.example.TeamPlaningToolBackend.repository.PersonMetaDataRepository;
 import com.example.TeamPlaningToolBackend.repository.PersonRepository;
 import com.example.TeamPlaningToolBackend.repository.TeamRepository;
 import com.example.TeamPlaningToolBackend.utils.AddMemberRequest;
@@ -26,6 +30,8 @@ public class TeamServiceImpl implements TeamService{
     private final TeamRepository teamRepository;
     @Autowired
     private final PersonRepository personRepository;
+    @Autowired
+    private final PersonMetaDataRepository personMetaDataRepository;
     @Autowired
     private final PersonService personService;
 
@@ -76,13 +82,20 @@ public class TeamServiceImpl implements TeamService{
 
         for (Team team: teamRepository.findAll()) {
             List<String> members = new ArrayList<>();
+            Map<String, PersonMetaData> personMetaMap = new HashMap<>();
+
+            for(PersonMetaData metaData: personMetaDataRepository.findAllByTeamName(team.getTeamName())) {
+                personMetaMap.put(metaData.getUsername(), metaData);
+            }
 
             team.getMembers().forEach(obj ->
                     members.add((obj.getUsername()
             )));
+
             TeamDTO newTeam = TeamDTO.builder()
                     .userIds(members)
                     .teamName(team.getTeamName())
+                    .metaData(personMetaMap)
                     .build();
 
             listOfTeam.add(newTeam);
@@ -143,41 +156,78 @@ public class TeamServiceImpl implements TeamService{
         XSSFSheet sheet = wb.getSheetAt(0);
 
         Map<String, Team> teamsMap = new HashMap<>();
-        Map<String, ArrayList<String>> memberTeamMap = new HashMap<>();
+        Map<String, ArrayList<MemberInfo>> memberTeamMap = new HashMap<>();
 
         for (int rowIndex = 9; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
             Row row = sheet.getRow(rowIndex);
             String name = row.getCell(8).getStringCellValue();
             String teamName = row.getCell(9).getStringCellValue();
-
+            String roleStr = row.getCell(10).getStringCellValue();
+            Role role = convertStringToRole(roleStr); // Add a method to convert the string to Role enum
+            float convertedAvailability = (float) row.getCell(11).getNumericCellValue();
+            int availability = convertAvailability(convertedAvailability);
+            System.out.println("UTANFLR FUNKTION: " + roleStr);
             if(name.isEmpty()) break;
 
             if(!teamsMap.containsKey(teamName)) {
                 teamsMap.put(teamName, new Team(teamName, "", new ArrayList<>()));
             }
 
-            if(!memberTeamMap.containsKey(name)) memberTeamMap.put(name, new ArrayList<>(List.of(teamName)));
-            else memberTeamMap.get(name).add(teamName);
+            if(!memberTeamMap.containsKey(name)) memberTeamMap.put(name, new ArrayList<>(List.of(new MemberInfo(teamName, role, availability))));
+            else memberTeamMap.get(name).add(new MemberInfo(teamName, role, availability));
         }
 
         for(String name: memberTeamMap.keySet()) {
-            ArrayList<String> teamName = memberTeamMap.get(name);
+            ArrayList<MemberInfo> memberInfos = memberTeamMap.get(name);
+            System.out.println("MEMERINFOS"+memberInfos + " : " + name);
             String firstname = name.split(",")[1];
             String lastname = name.split(",")[0];
             Optional<Person> personOptional = personRepository.findByFirstnameAndLastname(firstname, lastname);
             Person person;
             if(personOptional.isEmpty()) {
-                person = new Person(firstname.toLowerCase() + lastname.toLowerCase(), firstname, lastname, null, new ArrayList<>());
+                person = new Person(firstname.toLowerCase() + lastname.toLowerCase(), firstname, lastname, memberInfos.get(0).getRole(), new ArrayList<>());
                 personRepository.save(person);
             } else {
                 person = personOptional.get();
             }
-            for(String _teamName: teamName) teamsMap.get(_teamName).getMembers().add(person);
+
+            for(MemberInfo memberInfo : memberInfos) {
+                PersonMetaData personMetaData = new PersonMetaData(person.getUsername(), memberInfo.getTeamName(), memberInfo.getAvailability());
+                personMetaDataRepository.save(personMetaData);
+            }
+
+            for (MemberInfo memberInfo : memberInfos) {
+                Team team = teamsMap.get(memberInfo.getTeamName());
+                team.getMembers().add(person);
+            }
         }
 
         for(String teamName: teamsMap.keySet()) teamRepository.save(teamsMap.get(teamName));
     }
+    private int convertAvailability(float availability) {
+        float ava = (availability/40) * 100;
 
+        return (int) ava;
+    }
+    private Role convertStringToRole(String roleStr) {
+        System.out.println("I FUNKTION: " + roleStr);
+        if ("Development Engineer (Client/Server SW)".equalsIgnoreCase(roleStr) || roleStr.isEmpty()) {
+            return Role.DEVELOPMENT_ENGINEER;
+        } else if ("Technical Product Owner".equalsIgnoreCase(roleStr)) {
+            return Role.TECHNICAL_PRODUCT_OWNER;
+        } else if ("Requirements Engineer/Systems Architect".equalsIgnoreCase(roleStr)) {
+            return Role.REQUIREMENTS_ENGINEER_SYSTEMS_ARCHITECT;
+        } else if ("DevOps Engineer".equalsIgnoreCase(roleStr)) {
+            return Role.DEVOPS_ENGINEER;
+        } else if ("Line Manager".equalsIgnoreCase(roleStr)) {
+            return Role.LINE_MANAGER;
+        } else if ("Scrum Master".equalsIgnoreCase(roleStr)) {
+            return Role.SCRUM_MASTER;
+        } else {
+            throw new IllegalArgumentException("Unknown role: " + roleStr);
+        }
+
+    }
     @Override
     public void updateIRMSheet(String path) throws IOException {
         FileInputStream fis = new FileInputStream(path);
@@ -213,4 +263,6 @@ public class TeamServiceImpl implements TeamService{
         wb.close();
         fos.close();
     }
+
+
 }

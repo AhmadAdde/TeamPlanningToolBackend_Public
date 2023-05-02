@@ -3,6 +3,10 @@ package com.example.TeamPlaningToolBackend.enums;
 public enum Role {
     ADMIN,
     SCRUM_MASTER,
-    USER
-
+    USER,
+    DEVELOPMENT_ENGINEER,
+    TECHNICAL_PRODUCT_OWNER,
+    REQUIREMENTS_ENGINEER_SYSTEMS_ARCHITECT,
+    DEVOPS_ENGINEER,
+    LINE_MANAGER
 }

@@ -23,6 +23,8 @@ public class Team {
     @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @JoinTable(name = "team_person",
             joinColumns = {@JoinColumn(name = "team_name")},
-            inverseJoinColumns = {@JoinColumn(name = "username")})
+            inverseJoinColumns = {
+                    @JoinColumn(name = "username", referencedColumnName = "username", table="person_t")
+            })
     private List<Person> members = new ArrayList<>();
 }

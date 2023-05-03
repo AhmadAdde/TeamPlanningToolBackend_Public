@@ -1,15 +1,24 @@
-package com.example.TeamPlaningToolBackend.entities;
+package com.example.TeamPlaningToolBackend.utils;
 
 import com.example.TeamPlaningToolBackend.enums.Role;
 
+import java.util.ArrayList;
+import java.util.List;
 
-public class MemberInfo {
+
+public class MemberMetaDataDTO {
 
     private String teamName;
-    private Role role;
+    private ArrayList<Role> role;
     private int availability;
 
-    public MemberInfo(String teamName, Role role, int availability) {
+    public MemberMetaDataDTO(String teamName, Role role, int availability) {
+        this.teamName = teamName;
+        this.role = new ArrayList<>(List.of(role));
+        this.availability = availability;
+    }
+
+    public MemberMetaDataDTO(String teamName, ArrayList<Role> role, int availability) {
         this.teamName = teamName;
         this.role = role;
         this.availability = availability;
@@ -19,7 +28,7 @@ public class MemberInfo {
         return teamName;
     }
 
-    public Role getRole() {
+    public ArrayList<Role> getRole() {
         return role;
     }
 

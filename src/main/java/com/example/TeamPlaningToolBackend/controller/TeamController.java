@@ -27,6 +27,7 @@ public class TeamController {
 
     @PostMapping("/create")
     public void createTeam(@RequestBody List<TeamDTO> teams) {
+        System.out.println("TEAMS" + teams);
         teamService.createTeam(teams);
     }
 
@@ -43,6 +44,10 @@ public class TeamController {
     @PostMapping("/delete")
     public void delete(@RequestBody List<String> teamNames) {
         teamService.deleteTeam(teamNames);
+    }
+    @PostMapping("/deleteSavedData")
+    public void deleteSavedData(@RequestBody List<TeamDTO> teamNames) {
+        teamService.deleteSavedDatas(teamNames);
     }
 
     @PostMapping("load-irm")

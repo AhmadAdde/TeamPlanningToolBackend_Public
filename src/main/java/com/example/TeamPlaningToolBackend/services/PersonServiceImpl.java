@@ -51,7 +51,6 @@ public class PersonServiceImpl implements PersonService{
                     .username(person.getUsername())
                     .firstname(person.getFirstname())
                     .lastname(person.getLastname())
-                    .role(person.getRole())
                     .teams(teams)
                     .build();
 

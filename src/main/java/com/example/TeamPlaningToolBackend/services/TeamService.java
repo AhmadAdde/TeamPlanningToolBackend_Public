@@ -15,6 +15,7 @@ public interface TeamService {
     void addMember(AddMemberRequest member);
     void deleteMember(AddMemberRequest member);
     void deleteTeam(List<String> teamNames);
+    void deleteSavedDatas(List<TeamDTO> teamNames);
     void readIRMSheet(String path) throws IOException;
     void updateIRMSheet(String path) throws IOException;
 }

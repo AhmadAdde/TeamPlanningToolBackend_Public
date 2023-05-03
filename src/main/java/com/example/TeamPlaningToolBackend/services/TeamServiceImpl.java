@@ -1,6 +1,6 @@
 package com.example.TeamPlaningToolBackend.services;
 
-import com.example.TeamPlaningToolBackend.entities.MemberInfo;
+import com.example.TeamPlaningToolBackend.utils.MemberMetaDataDTO;
 import com.example.TeamPlaningToolBackend.entities.Person;
 import com.example.TeamPlaningToolBackend.entities.PersonMetaData;
 import com.example.TeamPlaningToolBackend.entities.Team;
@@ -49,23 +49,22 @@ public class TeamServiceImpl implements TeamService{
                                     .username(personDTO.getUsername())
                                     .firstname(personDTO.getFirstname())
                                     .lastname(personDTO.getLastname())
-                                    .role(personDTO.getRole())
                                     .build()
                     );
                 });
             }
 
-            /*
-            PersonDTO scrumMasterDTO = personService.getPersonByUsername(team.getScrumMaster());
-            Person scrumMaster = Person.builder()
-                    .username(scrumMasterDTO.getUsername())
-                    .firstname(scrumMasterDTO.getFirstname())
-                    .lastname(scrumMasterDTO.getLastname())
-                    .role(scrumMasterDTO.getRole())
-                    .build();
-            members.add(scrumMaster);
-*/
-
+            System.out.println("HEJSN");
+           team.getMetaData().forEach(obj ->{
+                    System.out.println("KEBAB" + obj.getTeamName() + " " + obj.getUsername() + " " + obj.getAvailability());
+                    PersonMetaData metaData = PersonMetaData.builder()
+                             .username(obj.getUsername())
+                             .teamName(obj.getTeamName())
+                             .availability(obj.getAvailability())
+                             .role(obj.getRole())
+                             .build();
+                     personMetaDataRepository.save(metaData);
+              });
             Team newTeam = Team.builder()
                     .members(members)
                     .teamName(team.getTeamName())
@@ -82,11 +81,8 @@ public class TeamServiceImpl implements TeamService{
 
         for (Team team: teamRepository.findAll()) {
             List<String> members = new ArrayList<>();
-            Map<String, PersonMetaData> personMetaMap = new HashMap<>();
 
-            for(PersonMetaData metaData: personMetaDataRepository.findAllByTeamName(team.getTeamName())) {
-                personMetaMap.put(metaData.getUsername(), metaData);
-            }
+            ArrayList<PersonMetaData> personMetaMap = new ArrayList<>(personMetaDataRepository.findAllByTeamName(team.getTeamName()));
 
             team.getMembers().forEach(obj ->
                     members.add((obj.getUsername()
@@ -116,7 +112,6 @@ public class TeamServiceImpl implements TeamService{
                         .username(personDTO.getUsername())
                         .firstname(personDTO.getFirstname())
                         .lastname(personDTO.getLastname())
-                        .role(personDTO.getRole())
                         .build()
         );
 
@@ -144,7 +139,17 @@ public class TeamServiceImpl implements TeamService{
             Optional<Team> teamsDB = teamRepository.findById(teamName);
             if (teamsDB.isEmpty()) return;
             teamRepository.deleteById(teamsDB.get().getTeamName());
+            personMetaDataRepository.deleteByTeamName(teamName);
         });
+    }
+
+    @Override
+    public void deleteSavedDatas(List<TeamDTO> teamNames) {
+        for(TeamDTO team: teamNames) {
+            for (PersonMetaData metaData: team.getMetaData()) {
+                personMetaDataRepository.deleteByTeamNameAndUsername(team.getTeamName(), metaData.getUsername());
+            }
+        }
     }
 
     @Override
@@ -156,7 +161,7 @@ public class TeamServiceImpl implements TeamService{
         XSSFSheet sheet = wb.getSheetAt(0);
 
         Map<String, Team> teamsMap = new HashMap<>();
-        Map<String, ArrayList<MemberInfo>> memberTeamMap = new HashMap<>();
+        Map<String, ArrayList<MemberMetaDataDTO>> memberTeamMap = new HashMap<>();
 
         for (int rowIndex = 9; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
             Row row = sheet.getRow(rowIndex);
@@ -173,31 +178,31 @@ public class TeamServiceImpl implements TeamService{
                 teamsMap.put(teamName, new Team(teamName, "", new ArrayList<>()));
             }
 
-            if(!memberTeamMap.containsKey(name)) memberTeamMap.put(name, new ArrayList<>(List.of(new MemberInfo(teamName, role, availability))));
-            else memberTeamMap.get(name).add(new MemberInfo(teamName, role, availability));
+            if(!memberTeamMap.containsKey(name)) memberTeamMap.put(name, new ArrayList<>(List.of(new MemberMetaDataDTO(teamName, role, availability))));
+            else memberTeamMap.get(name).add(new MemberMetaDataDTO(teamName, role, availability));
         }
 
         for(String name: memberTeamMap.keySet()) {
-            ArrayList<MemberInfo> memberInfos = memberTeamMap.get(name);
-            System.out.println("MEMERINFOS"+memberInfos + " : " + name);
+            ArrayList<MemberMetaDataDTO> memberMetaDataDTOS = memberTeamMap.get(name);
+            System.out.println("MEMERINFOS"+ memberMetaDataDTOS + " : " + name);
             String firstname = name.split(",")[1];
             String lastname = name.split(",")[0];
             Optional<Person> personOptional = personRepository.findByFirstnameAndLastname(firstname, lastname);
             Person person;
             if(personOptional.isEmpty()) {
-                person = new Person(firstname.toLowerCase() + lastname.toLowerCase(), firstname, lastname, memberInfos.get(0).getRole(), new ArrayList<>());
+                person = new Person(firstname.toLowerCase() + lastname.toLowerCase(), firstname, lastname, new ArrayList<>());
                 personRepository.save(person);
             } else {
                 person = personOptional.get();
             }
 
-            for(MemberInfo memberInfo : memberInfos) {
-                PersonMetaData personMetaData = new PersonMetaData(person.getUsername(), memberInfo.getTeamName(), memberInfo.getAvailability());
+            for(MemberMetaDataDTO memberMetaDataDTO : memberMetaDataDTOS) {
+                PersonMetaData personMetaData = new PersonMetaData(person.getUsername(), memberMetaDataDTO.getTeamName(), memberMetaDataDTO.getAvailability(), memberMetaDataDTO.getRole());
                 personMetaDataRepository.save(personMetaData);
             }
 
-            for (MemberInfo memberInfo : memberInfos) {
-                Team team = teamsMap.get(memberInfo.getTeamName());
+            for (MemberMetaDataDTO memberMetaDataDTO : memberMetaDataDTOS) {
+                Team team = teamsMap.get(memberMetaDataDTO.getTeamName());
                 team.getMembers().add(person);
             }
         }
@@ -235,8 +240,6 @@ public class TeamServiceImpl implements TeamService{
         XSSFWorkbook wb = (XSSFWorkbook) WorkbookFactory.create(fis, password);
 
         XSSFSheet sheet = wb.getSheetAt(0);
-        Map<String, Team> teamsMap = new HashMap<>();
-        Map<String, ArrayList<String>> memberTeamMap = new HashMap<>();
 
         for (int rowIndex = 9; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
             Row row = sheet.getRow(rowIndex);
@@ -244,18 +247,25 @@ public class TeamServiceImpl implements TeamService{
             if(nameCell.getStringCellValue().isEmpty()) break;
             nameCell.setBlank();
             row.getCell(9).setBlank();
-
+            row.getCell(10).setBlank();
+            row.getCell(11).setBlank();
         }
+
         int rowIndex = 9;
         for (Person person: personRepository.findAll()) {
-
             for (Team team: person.getTeams()) {
                 Row row = sheet.getRow(rowIndex);
                 row.getCell(8).setCellValue(person.getLastname() + ", " + person.getFirstname());
                 row.getCell(9).setCellValue(team.getTeamName());
+                Optional<PersonMetaData> metaData = personMetaDataRepository.findAllByTeamNameAndUsername(team.getTeamName(), person.getUsername());
+                if(metaData.isPresent()) {
+                    StringBuilder role = new StringBuilder();
+                    for(Role r: metaData.get().getRole()) role.append(r.toString()).append("/");
+                    row.getCell(10).setCellValue(role.toString());
+                    row.getCell(11).setCellValue(metaData.get().getAvailability() * 0.4);
+                }
                 rowIndex++;
             }
-
         }
         fis.close();
         FileOutputStream fos = new FileOutputStream(path);

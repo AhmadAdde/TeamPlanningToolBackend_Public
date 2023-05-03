@@ -7,7 +7,6 @@ import lombok.*;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.List;
 
 @Setter
 @Getter
@@ -25,5 +24,5 @@ public class PersonMetaData implements Serializable {
     @Id
     private String teamName;
     private int availability;
-
+    private ArrayList<Role> role;
 }

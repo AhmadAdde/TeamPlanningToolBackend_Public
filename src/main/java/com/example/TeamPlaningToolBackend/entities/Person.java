@@ -21,7 +21,6 @@ public class Person {
     private String username;
     private String firstname;
     private String lastname;
-    private Role role;
     @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST, mappedBy = "members")
     @ToString.Exclude
     private List<Team> teams = new ArrayList<>();

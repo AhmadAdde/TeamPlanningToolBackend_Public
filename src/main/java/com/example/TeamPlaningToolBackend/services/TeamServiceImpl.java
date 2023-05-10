@@ -4,7 +4,6 @@ import com.example.TeamPlaningToolBackend.utils.MemberMetaDataDTO;
 import com.example.TeamPlaningToolBackend.entities.Person;
 import com.example.TeamPlaningToolBackend.entities.PersonMetaData;
 import com.example.TeamPlaningToolBackend.entities.Team;
-import com.example.TeamPlaningToolBackend.enums.Role;
 import com.example.TeamPlaningToolBackend.repository.PersonMetaDataRepository;
 import com.example.TeamPlaningToolBackend.repository.PersonRepository;
 import com.example.TeamPlaningToolBackend.repository.TeamRepository;
@@ -13,6 +12,11 @@ import com.example.TeamPlaningToolBackend.utils.PersonDTO;
 import com.example.TeamPlaningToolBackend.utils.TeamDTO;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.jsoup.*;
+import org.jsoup.nodes.*;
+import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.apache.poi.ss.usermodel.*;
@@ -20,12 +24,23 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.*;
 
+import java.lang.reflect.Array;
+import java.net.URI;
+import java.net.http.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @Service
 @RequiredArgsConstructor
-public class TeamServiceImpl implements TeamService{
+public class TeamServiceImpl implements TeamService {
 
+    private static final String irmSheetPath = "src/main/java/com/example/TeamPlaningToolBackend/assets/IRM-Sample.xlsm";
+    private static final String irmSheetPassword = "sample";
+
+    private static final String confluenceUrl = "https://teamplaningtool.atlassian.net/wiki/rest/api/content/";
+    private static final String apiKey = "ATATT3xFfGF0WAIg2Waax0zpDbLk9wGSUCqkRW22LQtjksEsauUIEpVv_luk9rwLfMJ04KOPZDXshv2tp62jMiSZF790x9A_YhtR_6IlsLu7FKO1gqhF6jx4m_8qCtNbqpUUiXwvS1ij9u9-P6KCP27pMsHLkynijD-J2Xn_HDltE1Wmq8q-DiI=AFC54599";
+    private static final String email = "vinhed@gmail.com";
+    private static HashMap<String, String> teamIds;
     @Autowired
     private final TeamRepository teamRepository;
     @Autowired
@@ -167,11 +182,9 @@ public class TeamServiceImpl implements TeamService{
             Row row = sheet.getRow(rowIndex);
             String name = row.getCell(8).getStringCellValue();
             String teamName = row.getCell(9).getStringCellValue();
-            String roleStr = row.getCell(10).getStringCellValue();
-            Role role = convertStringToRole(roleStr); // Add a method to convert the string to Role enum
+            String role = row.getCell(10).getStringCellValue().replaceAll("/", "");
             float convertedAvailability = (float) row.getCell(11).getNumericCellValue();
             int availability = convertAvailability(convertedAvailability);
-            System.out.println("UTANFLR FUNKTION: " + roleStr);
             if(name.isEmpty()) break;
 
             if(!teamsMap.containsKey(teamName)) {
@@ -211,28 +224,9 @@ public class TeamServiceImpl implements TeamService{
     }
     private int convertAvailability(float availability) {
         float ava = (availability/40) * 100;
-
         return (int) ava;
     }
-    private Role convertStringToRole(String roleStr) {
-        System.out.println("I FUNKTION: " + roleStr);
-        if ("Development Engineer (Client/Server SW)".equalsIgnoreCase(roleStr) || roleStr.isEmpty()) {
-            return Role.DEVELOPMENT_ENGINEER;
-        } else if ("Technical Product Owner".equalsIgnoreCase(roleStr)) {
-            return Role.TECHNICAL_PRODUCT_OWNER;
-        } else if ("Requirements Engineer/Systems Architect".equalsIgnoreCase(roleStr)) {
-            return Role.REQUIREMENTS_ENGINEER_SYSTEMS_ARCHITECT;
-        } else if ("DevOps Engineer".equalsIgnoreCase(roleStr)) {
-            return Role.DEVOPS_ENGINEER;
-        } else if ("Line Manager".equalsIgnoreCase(roleStr)) {
-            return Role.LINE_MANAGER;
-        } else if ("Scrum Master".equalsIgnoreCase(roleStr)) {
-            return Role.SCRUM_MASTER;
-        } else {
-            throw new IllegalArgumentException("Unknown role: " + roleStr);
-        }
 
-    }
     @Override
     public void updateIRMSheet(String path) throws IOException {
         FileInputStream fis = new FileInputStream(path);
@@ -260,7 +254,7 @@ public class TeamServiceImpl implements TeamService{
                 Optional<PersonMetaData> metaData = personMetaDataRepository.findAllByTeamNameAndUsername(team.getTeamName(), person.getUsername());
                 if(metaData.isPresent()) {
                     StringBuilder role = new StringBuilder();
-                    for(Role r: metaData.get().getRole()) role.append(r.toString()).append("/");
+                    for(String r: metaData.get().getRole()) role.append(r).append("/");
                     row.getCell(10).setCellValue(role.toString());
                     row.getCell(11).setCellValue(metaData.get().getAvailability() * 0.4);
                 }
@@ -274,5 +268,187 @@ public class TeamServiceImpl implements TeamService{
         fos.close();
     }
 
+    private String getBasicAuthHeader() {
+        String auth = email + ":" + apiKey;
+        byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes(StandardCharsets.UTF_8));
+        return "Basic " + new String(encodedAuth);
+    }
+
+    private HashMap<String, String> getChildPageIds() {
+        String parentId = "65563";
+
+        HashMap<String, String> teamMap = new HashMap<>();
+        try  {
+            HttpClient httpClient = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2).build();
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(TeamServiceImpl.confluenceUrl + "/search?cql=parent="+ parentId))
+                    .header("Authorization", getBasicAuthHeader())
+                    .header("Content-Type", "application/json")
+                    .GET()
+                    .build();
+            HttpResponse<String> resp = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            JSONArray json = new JSONObject(resp.body()).getJSONArray("results");
+
+            for(Object a: json) {
+                JSONObject teamObj = (JSONObject)a;
+                String teamId = teamObj.getString("id");
+                String teamName = teamObj.getString("title").split(" - ")[0].replaceAll(" ", "_");
+                teamMap.put(teamName, teamId);
+            }
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
+        teamIds = (HashMap<String, String>) teamMap.clone();
+        return teamMap;
+    }
+
+    private ArrayList<ArrayList<String>> getTableFromPageId(String pageId) {
+        ArrayList<ArrayList<String>> tableContent = new ArrayList<>();
+
+        HttpClient httpClient = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2).build();
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(confluenceUrl + pageId + "?expand=body.view"))
+                .header("Authorization", getBasicAuthHeader())
+                .header("Content-Type", "application/json")
+                .GET()
+                .build();
+
+        HttpResponse<String> resp = null;
+        try {
+            resp = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            JSONObject json = new JSONObject(resp.body());
+            String html = json.getJSONObject("body").getJSONObject("view").getString("value");
+
+            Document doc = Jsoup.parse(html);
+            Elements tables = doc.select("tbody");
+            for(Element table: tables) {
+                String headers = table.childNode(0).toString();
+                if(!(headers.contains("Name") && headers.contains("Role") && headers.contains("Availability"))) continue;
+                for(int j = 1, i; j < table.children().size(); j++) {
+                    Element row = table.child(j);
+                    ArrayList<String> cells = new ArrayList<>();
+                    for(i = 0; i < 3; i++) {
+                        Element cell = row.child(i);
+                        if(cell.text().isEmpty()) break;
+                        cells.add(cell.text());
+                    }
+                    if(i != 3) continue;
+                    cells.set(2, cells.get(2).replaceAll("%", ""));
+                    tableContent.add(cells);
+                }
+            }
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        return tableContent;
+    }
+
+    private HashMap<String, ArrayList<ArrayList<String>>> readConfluence() {
+        HashMap<String, ArrayList<ArrayList<String>>> teamMemberData = new HashMap<>();
+        HashMap<String, String> teams = getChildPageIds();
+        for (Map.Entry<String, String> teamData : teams.entrySet()) {
+            teamMemberData.put(teamData.getKey(), getTableFromPageId(teamData.getValue()));
+        }
+        return teamMemberData;
+    }
+
+    private HashMap<String, ArrayList<ArrayList<String>>> readIRM() {
+        XSSFWorkbook wb = null;
+        try {
+            FileInputStream fis = new FileInputStream(irmSheetPath);
+            wb = (XSSFWorkbook) WorkbookFactory.create(fis, irmSheetPassword);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        XSSFSheet sheet = wb.getSheetAt(0);
+
+        HashMap<String, ArrayList<ArrayList<String>>> teamMemberData = new HashMap<>();
+
+        for (int rowIndex = 9; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
+            Row row = sheet.getRow(rowIndex);
+            String name = row.getCell(8).getStringCellValue();
+            if(name.isEmpty()) break;
+
+            String[] splitName = row.getCell(8).getStringCellValue().split(", ");
+            name = splitName[1] + " " + splitName[0];
+            if(name.charAt(0) == ' ') name = name.substring(1);
+            String teamName = row.getCell(9).getStringCellValue().split(" - ")[0].replaceAll("AirOn360_Team0", "AirOn360_Team").replaceAll("AirOn360_Team", "AirOn360_Team_");
+            String role = row.getCell(10).getStringCellValue().replaceAll("/", "");
+            float convertedAvailability = (float) row.getCell(11).getNumericCellValue();
+            int availability = convertAvailability(convertedAvailability);
+
+            if(!teamMemberData.containsKey(teamName)) {
+                teamMemberData.put(teamName, new ArrayList<>(List.of(new ArrayList<>(List.of(name, role, String.valueOf(availability))))));
+            } else {
+                teamMemberData.get(teamName).add(new ArrayList<>(List.of(name, role, String.valueOf(availability))));
+            }
+        }
+
+        return teamMemberData;
+    }
+
+    @Override
+    public void readData() {
+        HashMap<String, ArrayList<ArrayList<String>>> confluenceData = readConfluence();
+        HashMap<String, ArrayList<ArrayList<String>>> irmData = readIRM();
+        for (Map.Entry<String, ArrayList<ArrayList<String>>> irmMemberData : irmData.entrySet()) {
+            if(!confluenceData.containsKey(irmMemberData.getKey())) {
+                confluenceData.put(irmMemberData.getKey(), irmMemberData.getValue());
+            } else {
+                ArrayList<String> members = new ArrayList<>();
+                for(ArrayList<String> member: confluenceData.get(irmMemberData.getKey())) members.add(member.get(0));
+                for(ArrayList<String> member: irmMemberData.getValue()) {
+                    if(!members.contains(member.get(0))) {
+                        confluenceData.get(irmMemberData.getKey()).add(member);
+                    }
+                }
+            }
+        }
+        loadToDatabase(confluenceData);
+    }
+
+    private void loadToDatabase(HashMap<String, ArrayList<ArrayList<String>>> memberData) {
+        Map<String, Team> teamsMap = new HashMap<>();
+        Map<String, ArrayList<MemberMetaDataDTO>> memberTeamMap = new HashMap<>();
+
+        for (Map.Entry<String, ArrayList<ArrayList<String>>> mData : memberData.entrySet()) {
+            if(!teamsMap.containsKey(mData.getKey())) {
+                teamsMap.put(mData.getKey(), new Team(mData.getKey(), "", new ArrayList<>()));
+            }
+
+            for(ArrayList<String> m: mData.getValue()) {
+                if(!memberTeamMap.containsKey(m.get(0))) memberTeamMap.put(m.get(0), new ArrayList<>(List.of(new MemberMetaDataDTO(mData.getKey(), m.get(1), Integer.parseInt(m.get(2))))));
+                else memberTeamMap.get(m.get(0)).add(new MemberMetaDataDTO(mData.getKey(), m.get(1), Integer.parseInt(m.get(2))));
+            }
+
+        }
+
+        for(String name: memberTeamMap.keySet()) {
+            ArrayList<MemberMetaDataDTO> memberMetaDataDTOS = memberTeamMap.get(name);
+            String firstname = name.split(" ")[0];
+            String lastname = String.join(" ", Arrays.copyOfRange(name.split(" "), 1, name.split(" ").length));
+            Optional<Person> personOptional = personRepository.findByFirstnameAndLastname(firstname, lastname);
+            Person person;
+            if(personOptional.isEmpty()) {
+                person = new Person((firstname.toLowerCase() + lastname.toLowerCase()).replaceAll(" ", ""), firstname, lastname, new ArrayList<>());
+                personRepository.save(person);
+            } else {
+                person = personOptional.get();
+            }
+
+            for(MemberMetaDataDTO memberMetaDataDTO : memberMetaDataDTOS) {
+                PersonMetaData personMetaData = new PersonMetaData(person.getUsername(), memberMetaDataDTO.getTeamName(), memberMetaDataDTO.getAvailability(), memberMetaDataDTO.getRole());
+                personMetaDataRepository.save(personMetaData);
+            }
+
+            for (MemberMetaDataDTO memberMetaDataDTO : memberMetaDataDTOS) {
+                Team team = teamsMap.get(memberMetaDataDTO.getTeamName());
+                team.getMembers().add(person);
+            }
+        }
+        for(String teamName: teamsMap.keySet()) teamRepository.save(teamsMap.get(teamName));
+    }
 
 }

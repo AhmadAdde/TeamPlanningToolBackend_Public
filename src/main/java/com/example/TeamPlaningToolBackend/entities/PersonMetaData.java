@@ -24,5 +24,5 @@ public class PersonMetaData implements Serializable {
     @Id
     private String teamName;
     private int availability;
-    private ArrayList<Role> role;
+    private ArrayList<String> role;
 }

@@ -9,16 +9,16 @@ import java.util.List;
 public class MemberMetaDataDTO {
 
     private String teamName;
-    private ArrayList<Role> role;
+    private ArrayList<String> role;
     private int availability;
 
-    public MemberMetaDataDTO(String teamName, Role role, int availability) {
+    public MemberMetaDataDTO(String teamName, String role, int availability) {
         this.teamName = teamName;
         this.role = new ArrayList<>(List.of(role));
         this.availability = availability;
     }
 
-    public MemberMetaDataDTO(String teamName, ArrayList<Role> role, int availability) {
+    public MemberMetaDataDTO(String teamName, ArrayList<String> role, int availability) {
         this.teamName = teamName;
         this.role = role;
         this.availability = availability;
@@ -28,7 +28,7 @@ public class MemberMetaDataDTO {
         return teamName;
     }
 
-    public ArrayList<Role> getRole() {
+    public ArrayList<String> getRole() {
         return role;
     }
 

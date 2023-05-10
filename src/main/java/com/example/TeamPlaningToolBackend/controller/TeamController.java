@@ -58,6 +58,15 @@ public class TeamController {
             throw new RuntimeException(e);
         }
     }
+    @PostMapping("load-confluence")
+    public void loadConfluence() {
+        try {
+            System.out.println();
+            teamService.readData();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
     @PostMapping("update-irm")
     public void updateIrm(@RequestParam String path) {
         try {

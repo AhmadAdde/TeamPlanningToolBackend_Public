@@ -17,6 +17,6 @@ public class TeamDTO {
 
     private String teamName;
     private List<String> userIds;
-    private String scrumMaster;
+    private List<String> scrumMaster;
     private ArrayList<PersonMetaData> metaData;
 }

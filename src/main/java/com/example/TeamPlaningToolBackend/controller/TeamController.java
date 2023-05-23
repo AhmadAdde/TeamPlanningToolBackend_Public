@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -30,7 +31,10 @@ public class TeamController {
         System.out.println("TEAMS" + teams);
         teamService.createTeam(teams);
     }
-
+    @GetMapping("/get-roles")
+    public ArrayList<String> getRoles() {
+        return teamService.getRoles();
+    }
     @PostMapping("/add-member")
     public void addMember(@RequestBody AddMemberRequest newMember) {
         teamService.addMember(newMember);
@@ -45,33 +49,26 @@ public class TeamController {
     public void delete(@RequestBody List<String> teamNames) {
         teamService.deleteTeam(teamNames);
     }
+
     @PostMapping("/deleteSavedData")
     public void deleteSavedData(@RequestBody List<TeamDTO> teamNames) {
         teamService.deleteSavedDatas(teamNames);
     }
 
-    @PostMapping("load-irm")
-    public void loadIRM(@RequestParam String path) {
+    @GetMapping("/load-data")
+    public Map<String, Map<String, Map<String, ArrayList<String>>>> loadConfluence() {
         try {
-            teamService.readIRMSheet(path);
+           return teamService.readData();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
-    @PostMapping("load-confluence")
-    public void loadConfluence() {
+
+    @PostMapping("/update-data")
+    public void updateConfluence(@RequestBody List<String> teamNames) {
         try {
-            System.out.println();
-            teamService.readData();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-    @PostMapping("update-irm")
-    public void updateIrm(@RequestParam String path) {
-        try {
-            teamService.updateIRMSheet(path);
-        } catch (IOException e) {
+            teamService.updateData(teamNames);
+        } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }
     }

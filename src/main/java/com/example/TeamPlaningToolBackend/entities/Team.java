@@ -19,7 +19,7 @@ public class Team {
     @Column(name = "team_name")
     private String teamName;
     @Column(name = "scrum_master_id")
-    private String scrumMaster;
+    private List<String> scrumMaster = new ArrayList<>();
     @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @JoinTable(name = "team_person",
             joinColumns = {@JoinColumn(name = "team_name")},

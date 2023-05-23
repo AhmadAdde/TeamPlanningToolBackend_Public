@@ -8,6 +8,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public interface TeamService {
     void createTeam(List<TeamDTO> teams);
@@ -16,8 +17,7 @@ public interface TeamService {
     void deleteMember(AddMemberRequest member);
     void deleteTeam(List<String> teamNames);
     void deleteSavedDatas(List<TeamDTO> teamNames);
-    void readIRMSheet(String path) throws IOException;
-    void updateIRMSheet(String path) throws IOException;
-    void readData() throws IOException;
-
+    Map<String, Map<String, Map<String, ArrayList<String>>>> readData() throws IOException;
+    void updateData(List<String> teamNames) throws IOException, InterruptedException;
+    ArrayList<String> getRoles();
 }

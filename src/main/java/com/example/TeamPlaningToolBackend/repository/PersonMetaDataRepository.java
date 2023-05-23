@@ -12,10 +12,12 @@ import java.util.Optional;
 @Repository
 public interface PersonMetaDataRepository extends JpaRepository<PersonMetaData, String> {
     ArrayList<PersonMetaData> findAllByTeamName(String teamName);
-    Optional<PersonMetaData> findAllByTeamNameAndUsername(String teamName, String username);
+    Optional<PersonMetaData> findByTeamNameAndUsername(String teamName, String username);
+
     @Modifying
     @Transactional
     int deleteByTeamName(String teamName);
+
     @Modifying
     @Transactional
     int deleteByTeamNameAndUsername(String teamName, String Username);

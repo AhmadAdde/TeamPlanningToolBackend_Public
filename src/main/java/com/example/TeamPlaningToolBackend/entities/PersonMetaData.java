@@ -18,11 +18,13 @@ import java.util.ArrayList;
 @Table(name = "personMetaData_t")
 @IdClass(PersonMetaData.class)
 public class PersonMetaData implements Serializable {
-
     @Id
     private String username;
     @Id
     private String teamName;
+
+    @Column(name="availability")
     private int availability;
+    @Column(name="role")
     private ArrayList<String> role;
 }

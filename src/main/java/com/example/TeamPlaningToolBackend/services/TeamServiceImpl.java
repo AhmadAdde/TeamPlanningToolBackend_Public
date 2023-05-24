@@ -1,15 +1,12 @@
 package com.example.TeamPlaningToolBackend.services;
 
-import com.example.TeamPlaningToolBackend.utils.MemberMetaDataDTO;
+import com.example.TeamPlaningToolBackend.utils.*;
 import com.example.TeamPlaningToolBackend.entities.Person;
 import com.example.TeamPlaningToolBackend.entities.PersonMetaData;
 import com.example.TeamPlaningToolBackend.entities.Team;
 import com.example.TeamPlaningToolBackend.repository.PersonMetaDataRepository;
 import com.example.TeamPlaningToolBackend.repository.PersonRepository;
 import com.example.TeamPlaningToolBackend.repository.TeamRepository;
-import com.example.TeamPlaningToolBackend.utils.AddMemberRequest;
-import com.example.TeamPlaningToolBackend.utils.PersonDTO;
-import com.example.TeamPlaningToolBackend.utils.TeamDTO;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.json.JSONArray;
@@ -42,12 +39,13 @@ public class TeamServiceImpl implements TeamService {
     private static final String apiKey = "ATATT3xFfGF0WAIg2Waax0zpDbLk9wGSUCqkRW22LQtjksEsauUIEpVv_luk9rwLfMJ04KOPZDXshv2tp62jMiSZF790x9A_YhtR_6IlsLu7FKO1gqhF6jx4m_8qCtNbqpUUiXwvS1ij9u9-P6KCP27pMsHLkynijD-J2Xn_HDltE1Wmq8q-DiI=AFC54599";
     private static final String email = "vinhed@gmail.com";
     private static final String pageKey = "MFS";
-    private static final String parentId = "65563";
-    private static HashMap<String, String> teamIds;
+    private static final float jaroWinklerThreshold = 0.9f;
 
     @Autowired
     private final TeamRepository teamRepository;
-    @Autowired
+
+    private static final String parentId = "65563";
+    private static HashMap<String, String> teamIds;
     private final PersonRepository personRepository;
     @Autowired
     private final PersonMetaDataRepository personMetaDataRepository;
@@ -76,7 +74,7 @@ public class TeamServiceImpl implements TeamService {
             team.getMetaData().forEach(obj ->{
                 PersonMetaData metaData = PersonMetaData.builder()
                         .username(obj.getUsername())
-                        .teamName(obj.getTeamName())
+                        .teamName(obj.getTeamName().replaceAll(" ", "_"))
                         .availability(obj.getAvailability())
                         .role(obj.getRole())
                         .build();
@@ -85,7 +83,7 @@ public class TeamServiceImpl implements TeamService {
             });
             Team newTeam = Team.builder()
                     .members(members)
-                    .teamName(team.getTeamName())
+                    .teamName(team.getTeamName().replaceAll(" ", "_"))
                     //.scrumMaster(team.getScrumMaster())
                     .build();
 
@@ -260,9 +258,11 @@ public class TeamServiceImpl implements TeamService {
 
     @Override
     public void updateData(List<String> teamNames) throws IOException, InterruptedException {
+        teamNames.replaceAll(s -> s.replaceAll(" ", "_"));
         updateConfluence(teamNames);
         updateIRMSheet();
     }
+
     private void createConfluencePage(String teamName) throws IOException, InterruptedException {
         Optional<Team> teamOptional = teamRepository.findById(teamName);
         if (teamOptional.isEmpty()) return;
@@ -563,6 +563,10 @@ public class TeamServiceImpl implements TeamService {
                 cells.add(username);
                 cells.set(2, cells.get(2).replaceAll("%", ""));
 
+                List<String> rolesSorted = Arrays.asList(cells.get(1).split(" / "));
+                Collections.sort(rolesSorted);
+                cells.set(1, String.join(" / ", rolesSorted));
+
                 tableContent.add(cells);
             }
         }
@@ -604,6 +608,10 @@ public class TeamServiceImpl implements TeamService {
             float convertedAvailability = (float) row.getCell(11).getNumericCellValue();
             int availability = convertAvailability(convertedAvailability);
             String username = "";
+
+            List<String> rolesSorted = Arrays.asList(role.split(" / "));
+            Collections.sort(rolesSorted);
+            role = String.join(" / ", rolesSorted);
 
             if(!teamMemberData.containsKey(teamName)) {
                 teamMemberData.put(teamName, new ArrayList<>(List.of(new ArrayList<>(List.of(name, role, String.valueOf(availability), username)))));
@@ -693,16 +701,16 @@ public class TeamServiceImpl implements TeamService {
         for (Map.Entry<String, ArrayList<ArrayList<String>>> set : confluenceData.entrySet()) {
             String team = set.getKey();
 
-            ArrayList<ArrayList<String>> sortedConf = sortArrayListInArraylist(set.getValue());
-            ArrayList<ArrayList<String>> sortedIrm = sortArrayListInArraylist(irmData.get(team));
-            //System.out.println( "Sorted conf: "+ sortedConf);
-            //System.out.println( "Sorted irm: "+ sortedIrm);
+            ArrayList<ArrayList<String>> sortedConf = set.getValue();
+            ArrayList<ArrayList<String>> sortedIrm = irmData.get(team);
+            if(sortedIrm == null) sortedIrm = new ArrayList<>();
+            if(sortedConf == null) sortedConf = new ArrayList<>();
 
             for (int i = 0, j = 0; i < sortedConf.size(); i++) {
                 String nameConf = sortedConf.get(i).get(0);
                 boolean foundPersonInIrm = false;
                 for(; j < sortedIrm.size(); j++) {
-                    if(nameConf.equals(sortedIrm.get(j).get(0))) {
+                    if(JaroWinkler.compare(sortedIrm.get(j).get(0), nameConf) > jaroWinklerThreshold) {
                         foundPersonInIrm = true;
                         break;
                     }
@@ -711,7 +719,6 @@ public class TeamServiceImpl implements TeamService {
                     String nameIrm = sortedIrm.get(j).get(0);
                     if (!nameConf.equals(nameIrm)) {
                         irmAndConfMap.get("confluence").get("name").put(nameConf, new ArrayList<>());
-                        System.out.println("HOMOOOOO");
                         irmAndConfMap.get("confluence").get("name").get(nameConf).add(team);
                         irmAndConfMap.get("irm").get("name").put(nameIrm, new ArrayList<>());
                         irmAndConfMap.get("irm").get("name").get(nameIrm).add(team);
@@ -744,16 +751,6 @@ public class TeamServiceImpl implements TeamService {
 
         }
         return irmAndConfMap;
-    }
-
-    private ArrayList<ArrayList<String>> sortArrayListInArraylist(ArrayList<ArrayList<String>> list) {
-        list.sort(new Comparator<List<String>>() {
-            @Override
-            public int compare(List<String> o1, List<String> o2) {
-                return o1.get(0).compareTo(o2.get(0));
-            }
-        });
-        return list;
     }
 
 }

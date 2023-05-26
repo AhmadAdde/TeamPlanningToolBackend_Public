@@ -18,6 +18,6 @@ public class FileLoadConfig {
 
     @Bean
     public void readFile() {
-        personService.readFileToDatabase(localFilePath);
+        personService.readFileToDatabase(dockerFilePath);
     }
 }

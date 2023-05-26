@@ -33,6 +33,7 @@ import java.util.*;
 public class TeamServiceImpl implements TeamService {
 
     private static final String irmSheetPath = "src/main/java/com/example/TeamPlaningToolBackend/assets/IRM-Sample.xlsm";
+    private final String dockerFilePath = "/assets/src/main/java/com/example/TeamPlaningToolBackend/assets/IRM-Sample.xlsm";
     private static final String irmSheetPassword = "sample";
 
     private static final String confluenceUrl = "https://teamplaningtool.atlassian.net/wiki/rest/api/content/";
@@ -152,7 +153,7 @@ public class TeamServiceImpl implements TeamService {
     public ArrayList<String> getRoles() {
         XSSFWorkbook wb = null;
         try {
-            FileInputStream fis = new FileInputStream(irmSheetPath);
+            FileInputStream fis = new FileInputStream(dockerFilePath);
             wb = (XSSFWorkbook) WorkbookFactory.create(fis, irmSheetPassword);
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -191,7 +192,7 @@ public class TeamServiceImpl implements TeamService {
     }
 
     public void updateIRMSheet() throws IOException {
-        FileInputStream fis = new FileInputStream(irmSheetPath);
+        FileInputStream fis = new FileInputStream(dockerFilePath);
         String password = "sample";
         XSSFWorkbook wb = (XSSFWorkbook) WorkbookFactory.create(fis, password);
 
@@ -225,7 +226,7 @@ public class TeamServiceImpl implements TeamService {
             }
         }
         fis.close();
-        FileOutputStream fos = new FileOutputStream(irmSheetPath);
+        FileOutputStream fos = new FileOutputStream(dockerFilePath);
         wb.write(fos);
         wb.close();
         fos.close();
@@ -586,7 +587,7 @@ public class TeamServiceImpl implements TeamService {
     private HashMap<String, ArrayList<ArrayList<String>>> readIRM() {
         XSSFWorkbook wb = null;
         try {
-            FileInputStream fis = new FileInputStream(irmSheetPath);
+            FileInputStream fis = new FileInputStream(dockerFilePath);
             wb = (XSSFWorkbook) WorkbookFactory.create(fis, irmSheetPassword);
         } catch (IOException e) {
             throw new RuntimeException(e);

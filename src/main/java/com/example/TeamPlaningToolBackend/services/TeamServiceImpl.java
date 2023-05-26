@@ -33,6 +33,7 @@ import java.util.*;
 public class TeamServiceImpl implements TeamService {
 
     private static final String irmSheetPath = "src/main/java/com/example/TeamPlaningToolBackend/assets/IRM-Sample.xlsm";
+    private final String dockerFilePath = "/assets/src/main/java/com/example/TeamPlaningToolBackend/assets/IRM-Sample.xlsm";
     private static final String irmSheetPassword = "sample";
 
     private static final String confluenceUrl = "https://teamplaningtool.atlassian.net/wiki/rest/api/content/";
